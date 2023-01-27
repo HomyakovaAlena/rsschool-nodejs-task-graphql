@@ -2,23 +2,21 @@ import { FastifyPluginAsyncJsonSchemaToTs } from "@fastify/type-provider-json-sc
 import { idParamSchema } from "../../utils/reusedSchemas";
 import { createPostBodySchema, changePostBodySchema } from "./schema";
 import type { PostEntity } from "../../utils/DB/entities/DBPosts";
+
 import {
-  areAllFieldsDefined,
-  areAllTypesCorrect,
-  isEmptyBody,
-  isValidUuid,
-} from "../../lib/validation/common.validation";
-import {
-  replyBadRequest,
-  replyNotFound,
-} from "../../lib/errorHandling/replyMessager";
-import { isErrorNoRequiredEntity } from "../../lib/errorHandling/errorChecker";
+  createPost,
+  deletePost,
+  getPostById,
+  getPosts,
+  updatePost,
+} from "../../services/posts/posts.service";
+import { HttpError } from "@fastify/sensible/lib/httpError";
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify
 ): Promise<void> => {
   fastify.get("/", async function (request, reply): Promise<PostEntity[]> {
-    return this.db.posts.findMany();
+    return await getPosts(this.db);
   });
 
   fastify.get(
@@ -28,19 +26,12 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<PostEntity | null | undefined> {
-      try {
-        const { id } = request.params;
-        const postFound = await this.db.posts.findOne({
-          key: "id",
-          equals: id,
-        });
-        if (!postFound) replyNotFound(reply, "Post not found");
-        return postFound;
-      } catch (err) {
-        if (isErrorNoRequiredEntity(err))
-          replyNotFound(reply, "No required entity");
-      }
+    async function (
+      request,
+      reply
+    ): Promise<PostEntity | null | undefined | HttpError | void> {
+      const { id } = request.params;
+      return await getPostById(this.db, id, reply);
     }
   );
 
@@ -51,23 +42,11 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         body: createPostBodySchema,
       },
     },
-    async function (request, reply): Promise<PostEntity | undefined> {
-      try {
-        const { content, title, userId } = request.body;
-
-        if (isEmptyBody(request.body)) replyBadRequest(reply, "Empty body");
-        if (!areAllFieldsDefined([content, title, userId]))
-          replyBadRequest(reply, "Not all required fields provided");
-        if (!isValidUuid(userId))
-          replyBadRequest(reply, "User Id is not valid");
-        if (!areAllTypesCorrect(request.body, "posts"))
-          replyBadRequest(reply, "Not all fields are of correct types");
-
-        return this.db.posts.create({ content, title, userId });
-      } catch (err) {
-        if (isErrorNoRequiredEntity(err))
-          replyNotFound(reply, "No required entity");
-      }
+    async function (
+      request,
+      reply
+    ): Promise<PostEntity | undefined | HttpError | void> {
+      return await createPost(this.db, request.body, reply);
     }
   );
 
@@ -78,20 +57,12 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<PostEntity | undefined> {
-      try {
-        const { id } = request.params;
-        const postFound = await this.db.posts.findOne({
-          key: "id",
-          equals: id,
-        });
-        if (!postFound) replyBadRequest(reply, "Post not found");
-
-        return this.db.posts.delete(id);
-      } catch (err) {
-        if (isErrorNoRequiredEntity(err))
-          replyNotFound(reply, "No required entity");
-      }
+    async function (
+      request,
+      reply
+    ): Promise<PostEntity | undefined | HttpError | void> {
+      const { id } = request.params;
+      return await deletePost(this.db, id, reply);
     }
   );
 
@@ -103,19 +74,12 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<PostEntity | undefined> {
-      try {
-        const { id } = request.params;
-
-        if (isEmptyBody(request.body)) replyBadRequest(reply, "Empty body");
-        if (!areAllTypesCorrect(request.body, "posts"))
-          replyBadRequest(reply, "Not all fields are of correct types");
-
-        return this.db.posts.change(id, request.body);
-      } catch (err) {
-        if (isErrorNoRequiredEntity(err))
-          replyNotFound(reply, "No required entity");
-      }
+    async function (
+      request,
+      reply
+    ): Promise<PostEntity | undefined | HttpError | void> {
+      const { id } = request.params;
+      return await updatePost(this.db, id, request.body, reply);
     }
   );
 };

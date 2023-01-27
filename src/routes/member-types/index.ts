@@ -3,19 +3,11 @@ import { idParamSchema } from "../../utils/reusedSchemas";
 import { changeMemberTypeBodySchema } from "./schema";
 import type { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
 import {
-  areAllTypesCorrect,
-  isEmptyBody,
-  isFieldDefined,
-} from "../../lib/validation/common.validation";
-import {
-  replyBadRequest,
-  replyForbidden,
-  replyNotFound,
-} from "../../lib/errorHandling/replyMessager";
-import {
-  isErrorForbiddenOperation,
-  isErrorNoRequiredEntity,
-} from "../../lib/errorHandling/errorChecker";
+  updateMemberType,
+  getMemberTypeById,
+  getMemberTypes,
+} from "../../services/memberTypes/memberTypes.service";
+import { HttpError } from "@fastify/sensible/lib/httpError";
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify
@@ -23,8 +15,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify.get("/", async function (request, reply): Promise<
     MemberTypeEntity[]
   > {
-    const membersFound = await this.db.memberTypes.findMany();
-    return membersFound;
+    return await getMemberTypes(this.db);
   });
 
   fastify.get(
@@ -37,22 +28,9 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
     async function (
       request,
       reply
-    ): Promise<MemberTypeEntity | null | undefined> {
-      try {
-        const { id } = request.params;
-        const memberFound = await this.db.memberTypes.findOne({
-          key: "id",
-          equals: id,
-        });
-
-        if (!isFieldDefined(memberFound))
-          replyNotFound(reply, "Member-type not found");
-
-        return memberFound;
-      } catch (err) {
-        if (isErrorNoRequiredEntity(err))
-          replyNotFound(reply, "No required entity");
-      }
+    ): Promise<MemberTypeEntity | null | undefined | HttpError | void> {
+      const { id } = request.params;
+      return await getMemberTypeById(this.db, id, reply);
     }
   );
 
@@ -64,30 +42,13 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<MemberTypeEntity | undefined> {
-      try {
-        const { id } = request.params;
-        const { body } = request;
-
-        if (isEmptyBody(body)) replyBadRequest(reply, "Empty body");
-        if (!areAllTypesCorrect(body, "memberTypes"))
-          replyBadRequest(reply, "Not correct types");
-        if (
-          !(await this.db.memberTypes.findOne({
-            key: "id",
-            equals: id,
-          }))
-        )
-          replyBadRequest(reply, "Member-type not found");
-
-        const memberToUpdate = await this.db.memberTypes.change(id, body);
-        return memberToUpdate;
-      } catch (err) {
-        if (isErrorNoRequiredEntity(err))
-          replyNotFound(reply, "No required entity");
-        if (isErrorForbiddenOperation(err))
-          replyForbidden(reply, "Forbidden operation");
-      }
+    async function (
+      request,
+      reply
+    ): Promise<MemberTypeEntity | undefined | HttpError | void> {
+      const { id } = request.params;
+      const { body } = request;
+      return await updateMemberType(this.db, id, body, reply);
     }
   );
 };
