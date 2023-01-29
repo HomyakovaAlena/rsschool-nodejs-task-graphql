@@ -18,7 +18,7 @@ type Body = {
 };
 
 export const getPosts = async (db: DB) => {
-  return db.posts.findMany();
+  return await db.posts.findMany();
 };
 
 export const getPostById = async (db: DB, id: string, reply: FastifyReply) => {
@@ -46,7 +46,7 @@ export const createPost = async (db: DB, body: Body, reply: FastifyReply) => {
     if (!areAllTypesCorrect(body, "posts"))
       return replyBadRequest(reply, "Not all fields are of correct types");
 
-    return db.posts.create({ content, title, userId });
+    return await db.posts.create({ content, title, userId });
   } catch (err) {
     if (isErrorNoRequiredEntity(err))
       return replyNotFound(reply, "No required entity");
@@ -61,7 +61,7 @@ export const deletePost = async (db: DB, id: string, reply: FastifyReply) => {
     });
     if (!postFound) return replyBadRequest(reply, "Post not found");
 
-    return db.posts.delete(id);
+    return await db.posts.delete(id);
   } catch (err) {
     if (isErrorNoRequiredEntity(err))
       return replyNotFound(reply, "No required entity");
@@ -79,7 +79,7 @@ export const updatePost = async (
     if (!areAllTypesCorrect(body, "posts"))
       return replyBadRequest(reply, "Not all fields are of correct types");
 
-    return db.posts.change(id, body);
+    return await db.posts.change(id, body);
   } catch (err) {
     if (isErrorNoRequiredEntity(err))
       return replyNotFound(reply, "No required entity");

@@ -13,7 +13,7 @@ import DB from "../../utils/DB/DB";
 import { Body } from "../profiles/profiles.service";
 
 export const getUsers = async (db: DB) => {
-  return db.users.findMany();
+  return await db.users.findMany();
 };
 
 export const getUserById = async (db: DB, id: string, reply: FastifyReply) => {
@@ -39,7 +39,7 @@ export const createUser = async (db: DB, body: Body, reply: FastifyReply) => {
     if (!areAllTypesCorrect(body, "users"))
       return replyBadRequest(reply, "Not all fields are of correct types");
 
-    return db.users.create({ firstName, lastName, email });
+    return await db.users.create({ firstName, lastName, email });
   } catch (err) {
     if (isErrorNoRequiredEntity(err))
       return replyNotFound(reply, "No required entity");
@@ -84,7 +84,7 @@ export const deleteUser = async (db: DB, id: string, reply: FastifyReply) => {
     });
     if (profileOfDeletedUser) db.profiles.delete(profileOfDeletedUser.id);
 
-    return db.users.delete(id);
+    return await db.users.delete(id);
   } catch (err) {
     if (isErrorNoRequiredEntity(err))
       return replyNotFound(reply, "No required entity");
@@ -99,13 +99,12 @@ export const updateUser = async (
 ) => {
   try {
     if (!id) return replyNotFound(reply, "user not found");
-    const { firstName, lastName, email } = body;
 
     if (!areAllTypesCorrect(body, "users"))
       return replyBadRequest(reply, "Not all fields are of correct types");
     if (isEmptyBody(body)) return replyBadRequest(reply, "Empty body");
 
-    return db.users.change(id, { firstName, lastName, email });
+    return await db.users.change(id, body);
   } catch (err) {
     if (isErrorNoRequiredEntity(err))
       return replyNotFound(reply, "No required entity");
@@ -135,7 +134,7 @@ export const subscribeToUser = async (
       key: "id",
       equals: id,
     });
-    if (!subscriber && !user) return replyNotFound(reply, "user not found");
+    if (!subscriber || !user) return replyNotFound(reply, "user not found");
 
     const currentSubscribers = user?.subscribedToUserIds || [];
     const isAlreadySubscribed = currentSubscribers.includes(id);

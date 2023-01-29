@@ -1,5 +1,8 @@
-import { createPostBodySchema } from "../../routes/posts/schema";
+// import { createPostBodySchema } from "../../routes/posts/schema";
 
-export const correctPostsTypes = createPostBodySchema.properties;
-
-
+export const correctPostsTypes = {
+  title: { type: "string" },
+  content: { type: "string" },
+  userId: { type: "string" },
+  id: { type: "string" },
+};

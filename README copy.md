@@ -163,3 +163,85 @@ query {
       }  
   }	
 } 
+
+
+query ($id: String!) {
+  user (id: $id) {
+    id
+    firstName
+  }
+}
+
+
+mutation ($input: UserInput!) {
+  createUser (input: $input) {
+    id
+    firstName
+  }
+}
+
+{
+  "input": {
+    "firstName": "ccc",
+   "lastName": "ccc",
+   "email": "aaa@mail.ru"
+  }
+}
+
+
+mutation ($input: ProfileInput!) {
+  createProfile (input: $input) {
+    id
+  }
+}
+
+{
+  "input": {
+"avatar": "aaa",
+"sex": "aaa",
+"birthday": 25522,
+"country": "aaa",
+"street": "aaa",
+"city": "aaa",
+"userId": "70eafce9-ea32-450f-b394-96716fead50b",
+"memberTypeId": "basic"
+  }
+}
+
+
+"1ebf3091-4a09-407f-b5b4-78801d06734e"
+"acbafae5-f082-4bde-aaca-ba2656bcecd1"
+
+
+query {
+   usersWithSubscriptionsRecursive {
+      firstName
+      id
+    subscribedToUser {
+      firstName
+      id
+      subscribedToUser {
+        firstName
+        id
+        subscribedToUserIds     
+    }
+  }
+}
+}
+ 
+   
+
+{
+  __type(name: "PostInput") {
+    name
+    description
+    fields {
+      name
+      type {
+        name
+        kind
+      }
+    }
+  }
+}
+ 

@@ -18,7 +18,7 @@ export type Body = {
 };
 
 export const getProfiles = async (db: DB) => {
-  return db.profiles.findMany();
+  return await db.profiles.findMany();
 };
 
 export const getProfileById = async (
@@ -79,7 +79,7 @@ export const createProfile = async (
     if (await db.profiles.findOne({ key: "userId", equals: userId }))
       return replyBadRequest(reply, "Profile has been already created");
 
-    return db.profiles.create(body as CreateProfileDTO);
+    return await db.profiles.create(body as CreateProfileDTO);
   } catch (err) {
     if (isErrorNoRequiredEntity(err))
       return replyNotFound(reply, "No required entity");
@@ -100,7 +100,7 @@ export const deleteProfile = async (
     )
       return replyBadRequest(reply, "Profile not found");
 
-    return db.profiles.delete(id);
+    return await db.profiles.delete(id);
   } catch (err) {
     if (isErrorNoRequiredEntity(err))
       return replyNotFound(reply, "No required entity");

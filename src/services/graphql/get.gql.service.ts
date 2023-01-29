@@ -22,7 +22,7 @@ type UserWithRelations = {
   memberType: string | null;
 };
 
-type UserWithSubscriptionsRecursive = {
+export type UserWithSubscriptionsRecursive = {
   firstName: string;
   lastName: string;
   email: string;
