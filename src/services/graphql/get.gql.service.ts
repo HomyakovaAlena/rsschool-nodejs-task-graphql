@@ -49,6 +49,7 @@ export const getAll = async (db: DB) => {
 };
 
 export const getMemberTypeById = async (db: DB, id: string) => {
+  // return await getMemberTypeByIdWithBatching(args, context, info);
   try {
     const memberFound = await db.memberTypes.findOne({
       key: "id",

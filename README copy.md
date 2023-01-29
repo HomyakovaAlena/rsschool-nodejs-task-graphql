@@ -245,3 +245,42 @@ query {
   }
 }
  
+
+{
+  "data": {
+    "users": [
+      {
+        "id": "9e0f758f-ba3f-4825-94d0-82f5a350b775",
+        "firstName": "ccc"
+      },
+      {
+        "id": "2581e527-51e0-44d9-b8a3-a00bccdd16a4",
+        "firstName": "vvv"
+      },
+      {
+        "id": "fdd09c77-5b52-47ce-aba3-e77c8b51d311",
+        "firstName": "bbb"
+      },
+      {
+        "id": "650f561e-670b-428f-981b-4cf48a1eabb9",
+        "firstName": "aaa"
+      }
+    ]
+  }
+}
+
+
+mutation ($input: UserSubscriptionInput!) {
+  updateSubscribeTo (input: $input) {
+    firstName
+    id
+  }
+}
+
+
+{
+  "input": {
+    "userId": "1e435932-e575-42bb-81a4-f1a4c003a79f",
+   "id": "91af8ee1-96c5-414f-b6ff-779854ebcc30"
+  }
+}

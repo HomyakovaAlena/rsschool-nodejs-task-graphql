@@ -36,7 +36,10 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         source: source,
         rootValue: root,
         variableValues: variables,
-        contextValue: fastify.db,
+        contextValue: {
+          db: fastify.db,
+          dataLoaders: new WeakMap(),
+        },
       });
       console.log(response);
       return response;

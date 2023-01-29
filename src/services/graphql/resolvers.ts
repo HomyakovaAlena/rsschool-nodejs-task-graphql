@@ -4,10 +4,10 @@ import { getMemberTypes } from "../../services/memberTypes/memberTypes.service";
 import { getProfiles } from "../../services/profiles/profiles.service";
 import {
   getAll,
-  getMemberTypeById,
-  getPostById,
-  getProfileById,
-  getUserById,
+  // getMemberTypeById,
+  // getPostById,
+  // getProfileById,
+  // getUserById,
   getUserByIdWithSubscribedToUserAndPosts,
   getUsersWithHisSubscriptionsAndProfile,
   getUsersWithRelations,
@@ -37,80 +37,155 @@ import {
 import { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
 
 import DB from "../../utils/DB/DB";
+// import * as DataLoader from "dataloader";
+import {
+  getUserByIdWithBatching,
+  // getUsersByIds,
+} from "../users/userLoader.service";
+// import { getPostsByIds } from "../posts/postLoader.service";
+import { getMemberTypeByIdWithBatching } from "../memberTypes/memberTypeLoader.service";
+import {
+  getProfileByIdWithBatching,
+  // getProfilesByIds,
+} from "../profiles/profileLoader.service";
 
-interface Args {
+export interface Args {
   [key: string]: string;
 }
 
+export interface Context {
+  db: DB;
+  dataloaders: WeakMap<object, any>;
+}
+
+export interface Info {
+  fieldNodes: WeakMap<object, any>;
+}
+
 export const root = {
-  users: async (_: any, db: DB) => {
-    return await getUsers(db);
+  users: async (_: any, context: Context, info: Info) => {
+    return await getUsers(context.db);
   },
-  posts: async (_: Args, db: DB) => await getPosts(db),
-  memberTypes: async (_: Args, db: DB) => await getMemberTypes(db),
-  profiles: async (_: Args, db: DB) => await getProfiles(db),
-  getAll: async (_: Args, db: DB) => await getAll(db),
-  user: async (args: Args, db: DB) => {
-    return await getUserById(db, args.id);
+  posts: async (_: Args, context: Context, info: Info) => {
+    return await getPosts(context.db);
   },
-  post: async (args: Args, db: DB) => {
-    return await getPostById(db, args.id);
+  memberTypes: async (_: Args, context: Context, info: Info) =>
+    await getMemberTypes(context.db),
+  profiles: async (_: Args, context: Context, info: Info) =>
+    await getProfiles(context.db),
+  getAll: async (_: Args, context: Context, info: Info) =>
+    await getAll(context.db),
+  
+  user: async (args: Args, context: Context, info: Info) => {
+    return await getUserByIdWithBatching(args, context, info);
+    // return await getUserById(context.db, args.id);
   },
-  memberType: async (args: Args, db: DB) => {
-    return await getMemberTypeById(db, args.id);
+  post: async (args: Args, context: Context, info: Info) => {
+    return await getProfileByIdWithBatching(args, context, info);
+    // return await getPostById(context.db, args.id);
   },
-  profile: async (args: Args, db: DB) => {
-    return await getProfileById(db, args.id);
+  memberType: async (args: Args, context: Context, info: Info) => {
+    return await getMemberTypeByIdWithBatching(args, context, info);
+    // return await getMemberTypeById(context.db, args.id);
   },
-
-  usersWithRelations: async (_: Args, db: DB) => {
-    return await getUsersWithRelations(db);
-  },
-  userWithRelations: async (args: Args, db: DB) => {
-    return await getUserWithRelations(db, args.id);
-  },
-
-  usersWithHisSubscriptionsAndProfile: async (_: Args, db: DB) => {
-    return await getUsersWithHisSubscriptionsAndProfile(db);
-  },
-
-  userByIdWithSubscribedToUserAndPosts: async (args: Args, db: DB) => {
-    return await getUserByIdWithSubscribedToUserAndPosts(db, args.id);
+  profile: async (args: Args, context: Context, info: Info) => {
+    return await getProfileByIdWithBatching(args, context, info);
+    // return await getProfileById(context.db, args.id);
   },
 
-  usersWithSubscriptionsRecursive: async (_: Args, db: DB) => {
-    return await getUsersWithSubscriptionsRecursive(db);
+  usersWithRelations: async (_: Args, context: Context, info: Info) => {
+    return await getUsersWithRelations(context.db);
+  },
+  userWithRelations: async (args: Args, context: Context, info: Info) => {
+    return await getUserWithRelations(context.db, args.id);
   },
 
-  createUser: async (args: { input: CreateUserDTO }, db: DB) => {
-    return await createUser(db, Object.values(args)[0]);
+  usersWithHisSubscriptionsAndProfile: async (
+    _: Args,
+    context: Context,
+    info: Info
+  ) => {
+    return await getUsersWithHisSubscriptionsAndProfile(context.db);
   },
-  createProfile: async (args: { input: CreateProfileDTO }, db: DB) => {
-    return await createProfile(db, Object.values(args)[0]);
+
+  userByIdWithSubscribedToUserAndPosts: async (
+    args: Args,
+    context: Context,
+    info: Info
+  ) => {
+    return await getUserByIdWithSubscribedToUserAndPosts(context.db, args.id);
   },
-  createPost: async (args: { input: CreatePostDTO }, db: DB) => {
-    return await createPost(db, Object.values(args)[0]);
+
+  usersWithSubscriptionsRecursive: async (
+    _: Args,
+    context: Context,
+    info: Info
+  ) => {
+    return await getUsersWithSubscriptionsRecursive(context.db);
   },
-  updateUser: async (args: { input: Partial<UserEntity> }, db: DB) => {
-    return await updateUser(db, args.input);
+
+  createUser: async (
+    args: { input: CreateUserDTO },
+    context: Context,
+    info: Info
+  ) => {
+    return await createUser(context.db, Object.values(args)[0]);
   },
-  updateProfile: async (args: { input: Partial<ProfileEntity> }, db: DB) => {
-    return await updateProfile(db, args.input);
+  createProfile: async (
+    args: { input: CreateProfileDTO },
+    context: Context,
+    info: Info
+  ) => {
+    return await createProfile(context.db, Object.values(args)[0]);
   },
-  updatePost: async (args: { input: Partial<PostEntity> }, db: DB) => {
-    return await updatePost(db, args.input);
+  createPost: async (
+    args: { input: CreatePostDTO },
+    context: Context,
+    info: Info
+  ) => {
+    return await createPost(context.db, Object.values(args)[0]);
+  },
+  updateUser: async (
+    args: { input: Partial<UserEntity> },
+    context: Context,
+    info: Info
+  ) => {
+    return await updateUser(context.db, args.input);
+  },
+  updateProfile: async (
+    args: { input: Partial<ProfileEntity> },
+    context: Context,
+    info: Info
+  ) => {
+    return await updateProfile(context.db, args.input);
+  },
+  updatePost: async (
+    args: { input: Partial<PostEntity> },
+    context: Context,
+    info: Info
+  ) => {
+    return await updatePost(context.db, args.input);
   },
   updateMemberType: async (
     args: { input: Partial<MemberTypeEntity> },
-    db: DB
+    context: Context,
+    info: Info
   ) => {
-    return await updateMemberType(db, args.input);
+    return await updateMemberType(context.db, args.input);
   },
 
-  updateSubscribeTo: async (args: { input: UserSubscription }, db: DB) => {
-    return await updateSubscribeTo(db, args.input);
+  updateSubscribeTo: async (
+    args: { input: UserSubscription },
+    context: Context,
+    info: Info
+  ) => {
+    return await updateSubscribeTo(context.db, args.input);
   },
-  updateUnsubscribeFrom: async (args: { input: UserSubscription }, db: DB) => {
-    return await updateUnsubscribeFrom(db, args.input);
+  updateUnsubscribeFrom: async (
+    args: { input: UserSubscription },
+    context: Context,
+    info: Info
+  ) => {
+    return await updateUnsubscribeFrom(context.db, args.input);
   },
 };
