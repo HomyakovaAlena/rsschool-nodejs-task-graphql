@@ -1,5 +1,3 @@
-// import { createProfileBodySchema } from "../../routes/profiles/schema";
-
 export const correctProfilesTypes = {
   avatar: { type: "string" },
   sex: { type: "string" },

@@ -7,6 +7,7 @@ import {
   areAllFieldsDefined,
   areAllTypesCorrect,
   isEmptyBody,
+  isValidUuid,
 } from "../../lib/validation/common.validation";
 import DB from "../../utils/DB/DB";
 import { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
@@ -44,7 +45,8 @@ export const updatePost = async (db: DB, post: Partial<PostEntity>) => {
   try {
     if (isEmptyBody(post)) throw new Error("Empty body");
     if (!post.id) throw new Error("id is not provided");
-
+    if (post.userId && !isValidUuid(post.userId))
+      throw new Error("User Id is not valid");
     if (
       !(await db.posts.findOne({
         key: "id",
@@ -68,6 +70,8 @@ export const updateProfile = async (
   try {
     if (isEmptyBody(profile)) throw new Error("Empty body");
     if (!profile.id) throw new Error("id is not provided");
+    if (profile.userId && !isValidUuid(profile.userId))
+      throw new Error("User Id is not valid");
     if (
       !(await db.profiles.findOne({
         key: "id",

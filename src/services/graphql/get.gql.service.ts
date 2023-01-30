@@ -4,13 +4,17 @@ import {
 } from "../../lib/errorHandling/errorChecker";
 import { isFieldDefined } from "../../lib/validation/common.validation";
 import DB from "../../utils/DB/DB";
+import { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
 import { PostEntity } from "../../utils/DB/entities/DBPosts";
 import { ProfileEntity } from "../../utils/DB/entities/DBProfiles";
 import { UserEntity } from "../../utils/DB/entities/DBUsers";
 import { getMemberTypes } from "../memberTypes/memberTypes.service";
 import { getPosts } from "../posts/posts.service";
+import { getProfileByUserIdWithBatching } from "../profiles/profileLoader.service";
 import { getProfiles } from "../profiles/profiles.service";
+import { getUserByIdWithBatching } from "../users/userLoader.service";
 import { getUsers } from "../users/users.service";
+import { Args, Context, Info } from "./resolvers";
 
 type UserWithRelations = {
   firstName: string;
@@ -19,7 +23,7 @@ type UserWithRelations = {
   id: string;
   posts: PostEntity[] | null;
   profile: ProfileEntity | null;
-  memberType: string | null;
+  memberType: MemberTypeEntity | null;
 };
 
 export type UserWithSubscriptionsRecursive = {
@@ -49,7 +53,6 @@ export const getAll = async (db: DB) => {
 };
 
 export const getMemberTypeById = async (db: DB, id: string) => {
-  // return await getMemberTypeByIdWithBatching(args, context, info);
   try {
     const memberFound = await db.memberTypes.findOne({
       key: "id",
@@ -65,58 +68,8 @@ export const getMemberTypeById = async (db: DB, id: string) => {
   }
 };
 
-export const getPostById = async (db: DB, id: string) => {
-  try {
-    const postFound = await db.posts.findOne({
-      key: "id",
-      equals: id,
-    });
-    if (!postFound) throw new Error("Post not found");
-    return postFound;
-  } catch (err) {
-    if (isErrorNoRequiredEntity(err)) throw new Error("No required entity");
-    throwError(err);
-  }
-};
-
-export const getProfileById = async (db: DB, id: string) => {
-  try {
-    const profileFound = await db.profiles.findOne({
-      key: "id",
-      equals: id,
-    });
-    if (!profileFound) throw new Error("Profile not found");
-
-    return profileFound;
-  } catch (err) {
-    if (isErrorNoRequiredEntity(err)) throw new Error("No required entity");
-    throwError(err);
-  }
-};
-
-export const getUserById = async (db: DB, id: string) => {
-  try {
-    const userFound = await db.users.findOne({
-      key: "id",
-      equals: id,
-    });
-    if (!userFound) throw new Error("User not found");
-    return userFound;
-  } catch (err) {
-    if (isErrorNoRequiredEntity(err)) throw new Error("No required entity");
-    throwError(err);
-  }
-};
-
 export const getPostsByUserId = async (db: DB, id: string) => {
   return await db.posts.findMany({
-    key: "userId",
-    equals: id,
-  });
-};
-
-export const getProfileByUserId = async (db: DB, id: string) => {
-  return await db.profiles.findOne({
     key: "userId",
     equals: id,
   });
@@ -127,18 +80,34 @@ export const getMemberTypeByUserId = async (db: DB, id: string) => {
     key: "userId",
     equals: id,
   });
-  return profile?.memberTypeId || null;
+  return profile?.memberTypeId || "";
 };
 
-export const getUsersWithRelations = async (db: DB) => {
+export const getUsersWithRelations = async (
+  args: Args,
+  context: Context,
+  info: Info
+) => {
   try {
-    const usersFound = await getUsers(db);
+    const usersFound = await getUsers(context.db);
     const usersWithRelations: UserWithRelations[] = [];
     for (const user of usersFound) {
+      const argsForBatching: Args = {};
+      argsForBatching.id = user.id;
+      const profile = await getProfileByUserIdWithBatching(
+        argsForBatching,
+        context,
+        info
+      );
+
+      const memberType = profile
+        ? await getMemberTypeById(context.db, profile?.memberTypeId)
+        : null;
+
       usersWithRelations.push({
-        posts: await getPostsByUserId(db, user.id),
-        profile: await getProfileByUserId(db, user.id),
-        memberType: await getMemberTypeByUserId(db, user.id),
+        posts: await getPostsByUserId(context.db, user.id),
+        profile: profile,
+        memberType: memberType || null,
         ...user,
       });
     }
@@ -149,14 +118,29 @@ export const getUsersWithRelations = async (db: DB) => {
   }
 };
 
-export const getUserWithRelations = async (db: DB, id: string) => {
+export const getUserWithRelations = async (
+  args: Args,
+  context: Context,
+  info: Info
+) => {
   try {
-    const userFound = await getUserById(db, id);
+    const userFound = await getUserByIdWithBatching(args, context, info);
     if (!userFound) throw new Error("user not found");
+    const argsForBatching: Args = {};
+    argsForBatching.id = userFound.id;
+    const profile = await getProfileByUserIdWithBatching(
+      argsForBatching,
+      context,
+      info
+    );
+
+    const memberType = profile
+      ? await getMemberTypeById(context.db, profile?.memberTypeId)
+      : null;
     const userWithRelations = {
-      posts: await getPostsByUserId(db, userFound.id),
-      profile: await getProfileByUserId(db, userFound.id),
-      memberType: await getMemberTypeByUserId(db, userFound.id),
+      posts: await getPostsByUserId(context.db, userFound.id),
+      profile: profile,
+      memberType: memberType,
       ...userFound,
     };
     return userWithRelations;
@@ -167,18 +151,39 @@ export const getUserWithRelations = async (db: DB, id: string) => {
 };
 
 export const getUsersWithRelationsArrayById = async (
-  db: DB,
-  idArray: string[]
+  args: Args,
+  context: Context,
+  info: Info
 ) => {
   try {
     const usersWithRelations: UserWithRelations[] = [];
-    for (const id of idArray) {
-      const userFound = await getUserById(db, id);
+    for (const id of args.idArray) {
+      const argsWithSingleId: Args = {};
+      argsWithSingleId.id = id;
+      const userFound = await getUserByIdWithBatching(
+        argsWithSingleId,
+        context,
+        info
+      );
+      const profile = await getProfileByUserIdWithBatching(
+        argsWithSingleId,
+        context,
+        info
+      );
+
+      const memberType = profile
+        ? await getMemberTypeById(context.db, profile?.memberTypeId)
+        : null;
+
       if (userFound !== undefined) {
         const userWithRelations = {
-          posts: await getPostsByUserId(db, userFound.id),
-          profile: await getProfileByUserId(db, userFound.id),
-          memberType: await getMemberTypeByUserId(db, userFound.id),
+          posts: await getPostsByUserId(context.db, userFound.id),
+          profile: await getProfileByUserIdWithBatching(
+            argsWithSingleId,
+            context,
+            info
+          ),
+          memberType: memberType,
           ...userFound,
         };
         usersWithRelations.push(userWithRelations);
@@ -199,9 +204,9 @@ export const getUsersArrayById = async (db: DB, idArray: string[]) => {
 export const getCurrentUserSubscribedTo = async (db: DB, id: string) => {
   try {
     const usersFound = await getUsers(db);
-    const filteredUsers = usersFound.filter((user) => {
-      user.subscribedToUserIds.includes(id);
-    });
+    const filteredUsers = usersFound.filter((user) =>
+      user.subscribedToUserIds.includes(id)
+    );
     return filteredUsers;
   } catch (err) {
     if (isErrorNoRequiredEntity(err)) throw new Error("No required entity");
@@ -209,15 +214,26 @@ export const getCurrentUserSubscribedTo = async (db: DB, id: string) => {
   }
 };
 
-export const getUsersWithHisSubscriptionsAndProfile = async (db: DB) => {
+export const getUsersWithHisSubscriptionsAndProfile = async (
+  args: Args,
+  context: Context,
+  info: Info
+) => {
   try {
-    const usersFound = await getUsers(db);
+    const usersFound = await getUsers(context.db);
     const usersWithHisSubscriptionsAndProfile: UserWithHisSubscriptionsAndProfile[] =
       [];
     for (const user of usersFound) {
+      const argsForBatching: Args = {};
+      argsForBatching.id = user.id;
       usersWithHisSubscriptionsAndProfile.push({
-        profile: await getProfileByUserId(db, user.id),
-        userSubscribedTo: (await getCurrentUserSubscribedTo(db, user.id)) || [],
+        profile: await getProfileByUserIdWithBatching(
+          argsForBatching,
+          context,
+          info
+        ),
+        userSubscribedTo:
+          (await getCurrentUserSubscribedTo(context.db, user.id)) || [],
         ...user,
       });
     }
@@ -229,16 +245,17 @@ export const getUsersWithHisSubscriptionsAndProfile = async (db: DB) => {
 };
 
 export const getUserByIdWithSubscribedToUserAndPosts = async (
-  db: DB,
-  id: string
+  args: Args,
+  context: Context,
+  info: Info
 ) => {
   try {
-    const userFound = await getUserById(db, id);
+    const userFound = await getUserByIdWithBatching(args, context, info);
     if (!userFound) throw new Error("user not found");
     const userWithSubscribersAndPosts = {
-      posts: await getPostsByUserId(db, userFound.id),
+      posts: await getPostsByUserId(context.db, userFound.id),
       subscribedToUser: await getUsersArrayById(
-        db,
+        context.db,
         userFound.subscribedToUserIds
       ),
       ...userFound,

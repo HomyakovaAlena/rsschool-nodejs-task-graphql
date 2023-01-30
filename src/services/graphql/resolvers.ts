@@ -4,10 +4,6 @@ import { getMemberTypes } from "../../services/memberTypes/memberTypes.service";
 import { getProfiles } from "../../services/profiles/profiles.service";
 import {
   getAll,
-  // getMemberTypeById,
-  // getPostById,
-  // getProfileById,
-  // getUserById,
   getUserByIdWithSubscribedToUserAndPosts,
   getUsersWithHisSubscriptionsAndProfile,
   getUsersWithRelations,
@@ -37,17 +33,10 @@ import {
 import { MemberTypeEntity } from "../../utils/DB/entities/DBMemberTypes";
 
 import DB from "../../utils/DB/DB";
-// import * as DataLoader from "dataloader";
-import {
-  getUserByIdWithBatching,
-  // getUsersByIds,
-} from "../users/userLoader.service";
-// import { getPostsByIds } from "../posts/postLoader.service";
+import { getUserByIdWithBatching } from "../users/userLoader.service";
 import { getMemberTypeByIdWithBatching } from "../memberTypes/memberTypeLoader.service";
-import {
-  getProfileByIdWithBatching,
-  // getProfilesByIds,
-} from "../profiles/profileLoader.service";
+import { getProfileByIdWithBatching } from "../profiles/profileLoader.service";
+import { getPostByIdWithBatching } from "../posts/postLoader.service";
 
 export interface Args {
   [key: string]: string;
@@ -75,37 +64,33 @@ export const root = {
     await getProfiles(context.db),
   getAll: async (_: Args, context: Context, info: Info) =>
     await getAll(context.db),
-  
+
   user: async (args: Args, context: Context, info: Info) => {
     return await getUserByIdWithBatching(args, context, info);
-    // return await getUserById(context.db, args.id);
   },
   post: async (args: Args, context: Context, info: Info) => {
-    return await getProfileByIdWithBatching(args, context, info);
-    // return await getPostById(context.db, args.id);
+    return await getPostByIdWithBatching(args, context, info);
   },
   memberType: async (args: Args, context: Context, info: Info) => {
     return await getMemberTypeByIdWithBatching(args, context, info);
-    // return await getMemberTypeById(context.db, args.id);
   },
   profile: async (args: Args, context: Context, info: Info) => {
     return await getProfileByIdWithBatching(args, context, info);
-    // return await getProfileById(context.db, args.id);
   },
 
-  usersWithRelations: async (_: Args, context: Context, info: Info) => {
-    return await getUsersWithRelations(context.db);
+  usersWithRelations: async (args: Args, context: Context, info: Info) => {
+    return await getUsersWithRelations(args, context, info);
   },
   userWithRelations: async (args: Args, context: Context, info: Info) => {
-    return await getUserWithRelations(context.db, args.id);
+    return await getUserWithRelations(args, context, info);
   },
 
   usersWithHisSubscriptionsAndProfile: async (
-    _: Args,
+    args: Args,
     context: Context,
     info: Info
   ) => {
-    return await getUsersWithHisSubscriptionsAndProfile(context.db);
+    return await getUsersWithHisSubscriptionsAndProfile(args, context, info);
   },
 
   userByIdWithSubscribedToUserAndPosts: async (
@@ -113,7 +98,7 @@ export const root = {
     context: Context,
     info: Info
   ) => {
-    return await getUserByIdWithSubscribedToUserAndPosts(context.db, args.id);
+    return await getUserByIdWithSubscribedToUserAndPosts(args, context, info);
   },
 
   usersWithSubscriptionsRecursive: async (

@@ -14,7 +14,11 @@ export const getUserByIdWithBatching = async (
   info: Info
 ) => {
   const { dataloaders } = context;
-  let dl = dataloaders.get(info.fieldNodes);
+  const objKey = {
+    func: getUserByIdWithBatching.name,
+    ...info.fieldNodes,
+  };
+  let dl = dataloaders.get(objKey);
   if (!dl) {
     dl = new DataLoader(async (ids: any) => {
       const rows = await getUsersByIds(context.db, ids);
@@ -23,7 +27,7 @@ export const getUserByIdWithBatching = async (
       );
       return sortedInIdsOrder;
     });
-    dataloaders.set(info.fieldNodes, dl);
+    dataloaders.set(objKey, dl);
   }
   return dl.load(args.id);
 };

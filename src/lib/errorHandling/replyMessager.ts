@@ -20,14 +20,3 @@ export const replyForbidden = (
   message: string = "Forbidden"
 ) => reply.forbidden(message);
 
-// export const replyNotFound = (message: string = "Not Found") => {
-//   return fastify().httpErrors.notFound(message);
-// };
-
-// export const replyBadRequest = (message: string = "Bad Request") => {
-//   return fastify().httpErrors.badRequest(message);
-// };
-
-// export const replyForbidden = (message: string = "Forbidden") => {
-//   return fastify().httpErrors.forbidden(message);
-// };

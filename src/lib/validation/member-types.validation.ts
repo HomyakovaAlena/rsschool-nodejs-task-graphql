@@ -1,5 +1,3 @@
-// import { changeMemberTypeBodySchema } from "../../routes/member-types/schema";
-
 export const correctMemberTypes = {
   discount: { type: "number" },
   monthPostsLimit: { type: "number" },

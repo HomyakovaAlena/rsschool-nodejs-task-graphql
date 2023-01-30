@@ -8,7 +8,6 @@ import {
   areAllFieldsDefined,
   areAllTypesCorrect,
   isEmptyBody,
-  // isFieldDefined,
   isValidUuid,
 } from "../../lib/validation/common.validation";
 import DB from "../../utils/DB/DB";
@@ -18,7 +17,7 @@ type Body = {
 };
 
 export const getPosts = async (db: DB) => {
-  return await db.posts.findMany();
+  return (await db.posts.findMany()) || [];
 };
 
 export const getPostById = async (db: DB, id: string, reply: FastifyReply) => {

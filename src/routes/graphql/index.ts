@@ -7,7 +7,7 @@ import * as depthLimit from "graphql-depth-limit";
 import { schema } from "../../services/graphql/buildSchema.service";
 import { root } from "../../services/graphql/resolvers";
 
-const DEPTH = 2;
+const DEPTH = 3;
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify
@@ -23,9 +23,6 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       const source = JSON.parse(JSON.stringify(request.body.query));
       const variables = JSON.parse(JSON.stringify(request.body.variables));
       const errors = validate(schema, parse(source), [depthLimit(DEPTH)]);
-      console.log(source);
-      console.log(variables);
-      console.log(errors);
       let result: ExecutionResult = {};
       result.errors = errors;
       if (errors.length) {
@@ -38,10 +35,9 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         variableValues: variables,
         contextValue: {
           db: fastify.db,
-          dataLoaders: new WeakMap(),
+          dataloaders: new WeakMap(),
         },
       });
-      console.log(response);
       return response;
     }
   );

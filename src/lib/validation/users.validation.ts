@@ -1,5 +1,3 @@
-// import { createUserBodySchema } from "../../routes/users/schemas";
-
 export const correctUsersTypes = {
   firstName: { type: "string" },
   lastName: { type: "string" },

@@ -77,6 +77,7 @@ export const createProfile = async (db: DB, profile: CreateProfileDTO) => {
       throw new Error("Not all fields are of correct types");
     if (!isValidMemberType(memberTypeId))
       throw new Error("Not valid member-type");
+    if (!isValidUuid(userId)) throw new Error("User Id is not valid");
     if (!(await db.users.findOne({ key: "id", equals: userId })))
       throw new Error("User not found");
     if (await db.profiles.findOne({ key: "userId", equals: userId }))
