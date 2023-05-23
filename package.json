@@ -27,13 +27,15 @@
     "@fastify/autoload": "^5.0.0",
     "@fastify/sensible": "^5.0.0",
     "@fastify/type-provider-json-schema-to-ts": "^2.1.1",
+    "@types/uuid": "^9.0.0",
     "dataloader": "^2.1.0",
     "fastify": "^4.0.0",
     "fastify-cli": "^5.5.1",
     "fastify-plugin": "^4.0.0",
     "graphql": "^16.6.0",
     "graphql-depth-limit": "^1.1.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@types/graphql-depth-limit": "^1.1.3",

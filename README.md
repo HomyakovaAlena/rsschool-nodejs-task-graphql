@@ -1,5 +1,28 @@
 ## Assignment: Graphql
-### Tasks:
+
+## Downloading
+
+```bash
+git clone {repository URL}
+git checkout develop
+cd rsschool-nodejs-task-graphql
+```
+
+## Installing
+
+```bash
+npm install
+```
+
+## Running
+
+Use following commands:
+
+`npm run start` - to run application
+`npm run test` - to test application
+
+***
+## Tasks:
 1. Add logic to the restful endpoints (users, posts, profiles, member-types folders in ./src/routes).  
    1.1. npm run test - 100%  
 2. Add logic to the graphql endpoint (graphql folder in ./src/routes).  
